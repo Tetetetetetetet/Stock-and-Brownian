@@ -28,7 +28,10 @@ def load_data(stockSymbol='AAPL',start_date='2015-01-02',end_date='2019-12-31')-
     return data
 # Step 2: 计算对数收益率
 def calculate_log_returns(data:pd.DataFrame,calcDataColumn='Adj Close')->pd.Series:
-    data['Log_Returns'] = np.log(data[calcDataColumn] / data[calcDataColumn].shift(1))
+    '''
+    计算数据指定列的对数变化率（收益率）
+    '''
+    data['Log_Returns'] = np.log((data[calcDataColumn]-data[calcDataColumn].shift(1)) / data[calcDataColumn].shift(1))
     log_returns = data['Log_Returns'].dropna()
     log_returns.name='log returns'
     return log_returns
@@ -54,6 +57,7 @@ def estimate_parameters(log_returns:pd.Series):
     mu_mle, sigma_mle = result.x
     mu=mu_mle
     sigma=sigma_mle
+    print(f'Estimate Parameters：{mu} {sigma}')
     return mu,sigma
 def estimate_parameters_direct(log_returns:pd.Series):
     '''
@@ -63,19 +67,17 @@ def estimate_parameters_direct(log_returns:pd.Series):
     sigma=np.sqrt(sum((log_returns-mu)**2)/(len(log_returns)-1))
     return mu,sigma
 # Step 5: 验证拟合效果并绘制图形
-def W(t):
-        model=esg.WienerProcess(0,1)
-        return model.step(0,t)
-def predict_stock_price(S0, mu, sigma, TimeRange, num_simulations=5):
+def predict_stock_price(S0, mu, sigma, TimeRange:pd.Index, num_simulations=5):
     TimeRangedate=pd.to_datetime(TimeRange)
     T = (TimeRangedate[-1] - TimeRangedate[0]).days
     n = len(TimeRange)  # 交易日数量
-    dt = T / n
     simulated_prices = np.zeros((n, num_simulations))
-    ts=[(TimeRangedate[i]-TimeRangedate[0]).days for i in range((len(TimeRange)))]
+    ts=[(TimeRangedate[i]-TimeRangedate[0]).days for i in range((n))]
+    dt=[ts[i]-ts[max(0,i-1)] for i in range(n)]
     for i in range(num_simulations):
         # 生成标准正态随机数（模拟Wiener过程）
-        random_walk = np.random.normal(0, 1, n) * np.sqrt(dt)
+        random_walk = [np.random.normal(0, 1, n)[i] * np.sqrt(dt[i]) for i in range(n)]
+        Bt=np.cumsum(random_walk)
         # 计算每日股价
         sumdXt=[mu*t for t in ts]
         sumdXt=[a+sigma*b for a,b in zip(sumdXt,np.cumsum(random_walk))]
@@ -93,8 +95,11 @@ def plotStockPrices(ind:0):
         pricesWithDate.plot(ax=plt.gca(),label=label+str(ind))
         ind+=1
     return plot_stock_prices
-def pltset(title='Simulated Stock Price Paths',x='Date',y='Stock Price',grid=True,size=(6,10)):
-    plt.title(title)
+def pltset(title='Simulation of Stocks-AAPL',x='Date',y='Stock Price',grid=True,size=(6,10),stock=None):
+    if stock is not None:
+        plt.title('Simulation of Stocks - '+stock)
+    else:
+        plt.title(title)
     plt.xlabel(x)
     plt.ylabel(y)
     plt.legend()
@@ -121,9 +126,10 @@ def normSeries(index:pd.Index,mu=0,sigma=1,name='normSeires',wtexist=False)->pd.
     norms=pd.Series(norms,index=index,name=name)
     return norms
 def main():
-    # load data
+    #set properties & load data 
+    targetStock='MSFT'
     fittarget='Adj Close'
-    data=load_data()
+    data=load_data(targetStock,'2015-01-01','2019-12-31')
     print(data.head())
     dateindex=data[fittarget].index
     
@@ -138,6 +144,6 @@ def main():
     data[fittarget].plot(label='Real Stokes')
     S=predict_stock_price(s0,mu_mle,sigma_mle/2,dateindex,5)
     S.plot(label='fit with wt',ax=plt.gca())
-    pltset()
+    pltset(stock=targetStock)
 if __name__ == "__main__":
     main()
