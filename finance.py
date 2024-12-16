@@ -8,15 +8,24 @@ import pyesg as esg
 from scipy.stats import norm
 import pyesg as esg
 # Step 1: 下载数据
-def download_data(stock_symbol, start_date, end_date, file_name):
-    data = yf.download('AAPL', start='2015-01-01', end='2019-12-31')
-    data_reset = data.reset_index()  # 选择日期和调整后的收盘价列
-    data_reset.columns=data_reset.columns.get_level_values(0)
-    print(data_reset.head())
-    print(data_reset.head())
-    # 将数据保存为 CSV 文件
-    data_reset.to_csv('AAPL.csv', index=False)
 
+def load_data(stockSymbol='AAPL',start_date='2015-01-02',end_date='2019-12-31')->pd.DataFrame:
+    def download_data()->pd.DataFrame:
+        nonlocal stockSymbol,start_date,end_date
+        data = yf.download(stockSymbol, start_date, end_date)
+        with open('stocks.csv','a',encoding='utf-8'):
+            data.to_csv('stocks.csv',mode='a')
+        data_reset = data.reset_index() 
+        data_reset.columns=data_reset.columns.get_level_values(0)
+        data.columns=data.columns.get_level_values(0)
+        print(data_reset.head())
+        data_reset.to_csv(stockSymbol+'.csv', index=False)
+        return data
+    try:
+        data = pd.read_csv(stockSymbol+'.csv', index_col='Date')
+    except FileNotFoundError:
+        data = download_data(stockSymbol, start_date, end_date)
+    return data
 # Step 2: 计算对数收益率
 def calculate_log_returns(data:pd.DataFrame,calcDataColumn='Adj Close')->pd.Series:
     data['Log_Returns'] = np.log(data[calcDataColumn] / data[calcDataColumn].shift(1))
@@ -54,22 +63,6 @@ def estimate_parameters_direct(log_returns:pd.Series):
     sigma=np.sqrt(sum((log_returns-mu)**2)/(len(log_returns)-1))
     return mu,sigma
 # Step 5: 验证拟合效果并绘制图形
-def plot_fit(log_returns, mu_mle, sigma_mle):
-    """
-    绘制对数收益率的直方图及拟合的正态分布曲线
-    """
-    x = np.linspace(log_returns.min(), log_returns.max(), 10000)
-    fitted_pdf = (1 / (np.sqrt(2 * np.pi) * sigma_mle)) * np.exp(-(x - mu_mle)**2 / (2 * sigma_mle**2))
-
-    plt.figure(figsize=(10, 6))
-    plt.hist(log_returns, bins=100, density=True, alpha=0.6, color='g', label='Empirical Log Returns')
-    plt.plot(x, fitted_pdf, 'r', label='Fitted Normal Distribution')
-    plt.title("Fitted Distribution of Log Returns")
-    plt.xlabel("Log Returns")
-    plt.ylabel("Density")
-    plt.legend()
-    plt.grid()
-    plt.show()
 def W(t):
         model=esg.WienerProcess(0,1)
         return model.step(0,t)
@@ -108,12 +101,7 @@ def pltset(title='Simulated Stock Price Paths',x='Date',y='Stock Price',grid=Tru
     plt.grid(grid)
     plt.tight_layout()
     plt.show()
-def load_data(filename='stocks.csv',stockSymbol='AAPL',start_date='2015-01-02',end_date='2019-12-31')->pd.DataFrame:
-    try:
-        data = pd.read_csv(filename, index_col='Date')
-    except FileNotFoundError:
-        data = download_data(stockSymbol, start_date, end_date, filename)
-    return data
+
 def calcS_with_logreturns(s0,logreturns:pd.Series)->pd.DataFrame:
     S=[]
     for i in range(len(logreturns)):
