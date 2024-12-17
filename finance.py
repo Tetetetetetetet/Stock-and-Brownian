@@ -7,6 +7,8 @@ import code
 import pyesg as esg
 from scipy.stats import norm
 import pyesg as esg
+from typing import Tuple, Dict
+from typing import Callable
 # Step 1: 下载数据
 
 def load_data(stockSymbol='AAPL',start_date='2015-01-02',end_date='2019-12-31')->pd.DataFrame:
@@ -57,7 +59,7 @@ def estimate_parameters(log_returns:pd.Series):
     mu_mle, sigma_mle = result.x
     mu=mu_mle
     sigma=sigma_mle
-    print(f'Estimate Parameters：{mu} {sigma}')
+    print(f'Estimate Parameters：{mu:.6f} {sigma:.6f}')
     return mu,sigma
 def estimate_parameters_direct(log_returns:pd.Series):
     '''
@@ -88,6 +90,32 @@ def predict_stock_price(S0, mu, sigma, TimeRange:pd.Index, num_simulations=5):
     df_simulated_prices = pd.DataFrame(simulated_prices, index=TimeRange, columns=[f'Simulation {i+1}' for i in range(num_simulations)])
     
     return df_simulated_prices
+def predict_stock_price_esg(s0,mu,sigma,TimeRange:pd.Index,num_simulations=5,randseed=None):
+    n=len(TimeRange)
+    TimeRangedate=pd.to_datetime(TimeRange)
+    T=(TimeRangedate[-1]-TimeRangedate[0]).days
+    ts=[(TimeRangedate[i]-TimeRangedate[0]).days for i in range((n))]
+    dt=[ts[i]-ts[max(0,i-1)] for i in range(n)]
+    geo=esg.GeometricBrownianMotion(mu,sigma=sigma)
+    S_paths=np.zeros((n,num_simulations))
+    if randseed is None:
+        randseeds=np.random.randint(0,100,num_simulations)
+    else:
+        randseeds=[randseed]
+    print(randseeds)
+    for i in range(num_simulations):
+        randseed=randseeds[i]
+        newPath=geo.scenarios(s0,T/n,n_scenarios=1,n_steps=n-1,random_state=int(randseed))
+        S_paths[:,i]=newPath.T[:,0]
+    S_paths=pd.DataFrame(S_paths,index=TimeRange,columns=[f'Simulation {i+1},randseed={randseeds[i]} 'for i in range(num_simulations)])
+    return S_paths
+def MSE(realdata:np.array,fitdata:np.array):
+    if realdata.shape != fitdata.shape:
+        raise ValueError("输入的两个 DataFrame 的形状必须相同")
+    error = realdata - fitdata
+    squared_error = error ** 2
+    mse = squared_error.mean()
+    return mse
 def plotStockPrices(ind:0):    
     def plot_stock_prices(pricesWithDate:pd.DataFrame,label='Simulation'):
         #plt.figure(figsize=(6,10))
@@ -125,7 +153,52 @@ def normSeries(index:pd.Index,mu=0,sigma=1,name='normSeires',wtexist=False)->pd.
         norms=[a+b for a,b in zip(norms,wt)]
     norms=pd.Series(norms,index=index,name=name)
     return norms
+def split_data(data: pd.DataFrame, train_size_percent: float = 0.8):
+    """
+    按照指定比例将数据划分为训练集和验证集
+    :param data: 输入的股票数据
+    :param train_size: 训练集的比例，默认0.8，验证集比例为1-train_size
+    :return: 训练集和验证集
+    """
+    # 确定划分的位置
+    train_end = int(len(data) * train_size_percent)
+    train_data = data.iloc[:train_end]
+    val_data = data.iloc[train_end:]
+    return train_data, val_data
+def validate_model(train_data: pd.DataFrame, 
+                   val_data: pd.DataFrame, 
+                   model_func:Callable[...,pd.DataFrame]=predict_stock_price_esg, 
+                   fittarget='Adj Close', 
+                   num_simulations=5)->Tuple[dict,pd.DataFrame]:
+    """
+    在验证集上验证模型的表现
+    :param train_data: 训练集
+    :param val_data: 验证集
+    :param model_func: 用于生成预测的模型函数
+    :param fittarget: 用于拟合的目标列，默认'Adj Close'
+    :param num_simulations: 模拟次数
+    :return: 均方误差（MSE）(dict-),预测值(dataframe),拟合最佳种子
+    """
+    # 计算训练集的对数收益率
+    log_returns = calculate_log_returns(train_data, fittarget)
+    # 根据训练集估计参数
+    mu_mle, sigma_mle = estimate_parameters(log_returns)
+    # 初始股价
+    s0 = val_data[fittarget].values[0]
+    # 使用模型进行预测
+    predicted_prices = model_func(s0, mu_mle, sigma_mle, val_data.index, num_simulations) 
+    # 计算验证集的MSE
+    mse_values = {}
+    for sim in predicted_prices:
+        mse = MSE(predicted_prices[sim].values, val_data[fittarget].values)
+        mse_values[sim] = mse
+        print(f'{sim} MSE on validation set: {mse:.6f}')
+    minmse=min(mse_values.values())
+    minkey=min(mse_values,key=mse_values.get)
+    return mse_values,predicted_prices
+
 def main():
+
     #set properties & load data 
     targetStock='MSFT'
     fittarget='Adj Close'
@@ -133,17 +206,25 @@ def main():
     print(data.head())
     dateindex=data[fittarget].index
     
+    
+
     #calculate log_returns (also change rate)
     log_returns = calculate_log_returns(data)
 
-    #estimate parameters
-    mu_mle, sigma_mle = estimate_parameters(log_returns)
+    #divid data
+    train_data,val_data=split_data(data,0.8)
+    mse,fitdata=validate_model(train_data=train_data,val_data=val_data,model_func=predict_stock_price_esg,fittarget='Adj Close',num_simulations=10)
 
-    #calulate S(t)
-    s0=data[fittarget].values[0]
-    data[fittarget].plot(label='Real Stokes')
-    S=predict_stock_price(s0,mu_mle,sigma_mle/2,dateindex,5)
-    S.plot(label='fit with wt',ax=plt.gca())
+    #verify fit result
+    fitdata=predict_stock_price_esg(val_data[fittarget].values[0],0.001,0.02,val_data[fittarget].index,1,71)
+    fitdata.plot()
+    val_data[fittarget].plot(ax=plt.gca(),label='real data')
+    pltset()
+
+    #demostate
+    val_data[fittarget].plot(ax=plt.gca(),label='Real Data')
+    fitdata.plot(ax=plt.gca())
+    #S=predict_stock_price(s0,mu_mle,sigma_mle,dateindex,5)
     pltset(stock=targetStock)
 if __name__ == "__main__":
     main()
