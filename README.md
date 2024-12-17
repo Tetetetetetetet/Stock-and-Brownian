@@ -21,11 +21,9 @@ source.py：__主程序__:
 
 img: __运行结果曲线记录__
 
-record.csv: __运行结果记录__
+record.csv: __运行结果记录(仅Predict MSE<400时记录)__
 
 FitS:__详细拟合结果记录__
-
-## 仅将预测MSE小于400的记录
 
 ## 结果展示
 ![拟合的最好的一次](img/MSFT584.png)
