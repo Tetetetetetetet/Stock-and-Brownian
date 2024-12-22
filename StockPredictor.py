@@ -249,11 +249,11 @@ class StockSimulation:
             self.__init__(generateTimes=self.generateTimes,trainNum=self.trainNum,demoResult=self.demoResult)
             
 def main():
-    ticker=input("输入预测的股票代码（微软：MSFT，苹果：AAPL")
+    ticker=input("输入预测的股票代码（微软：MSFT，苹果：AAPL):")
     times=int(input("输入执行次数"))
-    triantimes=bool(int(input("输入每次训练路径生成数量")))
-    demoresult=bool(int(input("是否展示每次结果(1:是，2:否)")))
-    demotrain=bool(int(input("是否展示训练情况(1:是，2:否)")))
+    triantimes=int(input("输入每次训练路径生成数量"))
+    demoresult=bool(int(input("是否展示每次结果(1:是，0:否)")))
+    demotrain=bool(int(input("是否展示训练情况(1:是，0:否)")))
     ss = StockSimulation(ticker=ticker,generateTimes=times,trainNum=triantimes,demoResult=demoresult,demoTrain=demotrain)
     ss.runTimes()
 
