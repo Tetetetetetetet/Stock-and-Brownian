@@ -5,6 +5,7 @@ Used package website:
 Package pyesg: <https://github.com/jason-ash/pyesg>
 
 
+
 Package yfinance: <https://github.com/ranaroussi/yfinance> <https://finance.yahoo.com/>
 
 
