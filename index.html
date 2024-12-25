@@ -4,157 +4,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="使用蒙特卡洛方法进行期权定价">
-    <title>蒙特卡洛方法期权定价</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="description" content="BK公式蒙特卡洛模拟展示">
+    <title>BK公式蒙特卡洛模拟</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f9f9f9;
-            color: #333;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
         }
 
-        header {
-            background-color: #2C3E50;
-            color: white;
-            padding: 20px;
-            text-align: center;
+        .container {
+            width: 80%;
+            margin: 0 auto;
         }
 
-        header h1 {
-            margin: 0;
-            font-size: 3em;
-        }
-
-        nav {
-            background-color: #34495E;
-            text-align: center;
-        }
-
-        nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        nav ul li {
-            display: inline;
-            margin: 15px;
-        }
-
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            font-size: 1.2em;
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .about, .results, .contact {
-            margin-bottom: 40px;
-        }
-
-        .about h2, .results h2, .contact h2 {
-            color: #2C3E50;
-            font-size: 2.5em;
-        }
-
-        .about p, .results p {
-            font-size: 1.2em;
-            line-height: 1.6em;
-        }
-
-        footer {
-            background-color: #2C3E50;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
+        canvas {
             width: 100%;
-            bottom: 0;
+            height: 400px;
         }
 
-        footer p {
-            margin: 0;
-        }
-
-        .btn {
-            background-color: #E74C3C;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-
-        .btn:hover {
-            background-color: #C0392B;
+        .footer {
+            text-align: center;
+            margin-top: 50px;
         }
     </style>
 </head>
 
 <body>
+    <div class="container">
+        <h1 style="text-align: center;">BK公式蒙特卡洛模拟结果</h1>
+        <p style="text-align: center;">该页面展示了通过蒙特卡洛方法计算的期权定价结果及股票价格模拟路径。</p>
 
-    <!-- Header -->
-    <header>
-        <h1>蒙特卡洛方法期权定价</h1>
-        <p>使用蒙特卡洛方法对期权进行定价和金融数据分析</p>
-    </header>
+        <!-- 动态图表展示 -->
+        <h2>期权定价模拟结果</h2>
+        <canvas id="optionChart"></canvas>
 
-    <!-- Navigation -->
-    <nav>
-        <ul>
-            <li><a href="#about">关于</a></li>
-            <li><a href="#results">成果展示</a></li>
-            <li><a href="#contact">联系方式</a></li>
-        </ul>
-    </nav>
+        <h2>股票路径模拟</h2>
+        <canvas id="stockPathChart"></canvas>
 
-    <!-- Main Content -->
-    <div class="content">
+        <!-- 图像展示 -->
+        <h2>模拟结果图像</h2>
+        <img src="path_to_your_image/result_image.png" alt="模拟结果" style="max-width: 100%; height: auto;">
 
-        <!-- About Section -->
-        <section id="about" class="about">
-            <h2>项目介绍</h2>
-            <p>本项目演示了蒙特卡洛方法在期权定价中的应用。我们使用实际的股票数据模拟资产价格路径，并根据Black-Scholes模型估算欧洲看涨和看跌期权的价格。</p>
-            <p>我们的目标是了解资产价格、波动率和到期时间的变化如何影响期权定价。通过使用蒙特卡洛模拟，我们可以估算在多个模拟路径下的期权预期支付。</p>
-        </section>
-
-        <!-- Results Section -->
-        <section id="results" class="results">
-            <h2>项目成果</h2>
-            <p>在我们的模拟中，我们生成了多个股票价格路径并计算了期权的预期价值。以下是一些我们的主要发现：</p>
-            <ul>
-                <li>对于上涨趋势的股票，当股价下降时，看跌期权的价值增加。</li>
-                <li>如果股价未超过行权价，看涨期权的价值保持较低。</li>
-                <li>我们观察到期权价值在波动率和到期时间的变化下有显著变化。</li>
-            </ul>
-            <p>你可以在项目的GitHub仓库中查看更详细的结果和分析。</p>
-            <a href="https://github.com/yourusername/yourrepo" class="btn">在GitHub上查看</a>
-        </section>
-
-        <!-- Contact Section -->
-        <section id="contact" class="contact">
-            <h2>联系方式</h2>
-            <p>如果你有任何问题或希望合作，欢迎随时联系！</p>
-            <ul>
-                <li>邮箱：<a href="mailto:your.email@example.com">your.email@example.com</a></li>
-                <li>GitHub：<a href="https://github.com/yourusername" target="_blank">github.com/yourusername</a></li>
-            </ul>
-        </section>
-
+        <div class="footer">
+            <p>所有权证明：<a href="proof.jpg">课程实拍图</a></p>
+        </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 蒙特卡洛期权定价项目 | 保留所有权利</p>
-    </footer>
+    <script>
+        // 期权定价图表模拟数据
+        var ctx1 = document.getElementById('optionChart').getContext('2d');
+        var optionChart = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: [/* 时间序列 */],
+                datasets: [{
+                    label: '期权价格',
+                    data: [/* 期权价格数据 */],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: false
+                }]
+            }
+        });
 
+        // 股票路径模拟数据
+        var ctx2 = document.getElementById('stockPathChart').getContext('2d');
+        var stockPathChart = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: [/* 时间序列 */],
+                datasets: [{
+                    label: '股票路径',
+                    data: [/* 股票路径数据 */],
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    fill: false
+                }]
+            }
+        });
+    </script>
 </body>
 
 </html>
