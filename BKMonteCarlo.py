@@ -328,10 +328,12 @@ def main():
     ss.load_data()
     ss.estimate_parameters()
     ss.mu=ss.mu
-    ss.OptionPricing_m(nblocks=1000)
+    ss.OptionPricing_m(nblocks=100)
     ss.data[ss.fittarget].plot(label='Stock Price')
     plt.plot(ss.Vc,label='call value')
     plt.plot(ss.Vp,label='put value')
+    with open(file="Vc.txt",mode='w',encoding="utf-8"):
+        print(ss.Vc,file='Vc.txt')
     #plt.plot(ss.Vp,label='Vp')
     ss.pltset()
 

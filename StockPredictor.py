@@ -7,6 +7,7 @@ import pyesg as esg
 import code
 import shutil
 import os
+import yfinance as yf
 class StockSimulation:
     def __init__(self, ticker='MSFT', start_date='2015-01-02', end_date='2019-12-31',fittarget='Adj Close',generateTimes=100,trainNum=20,demoTrain=False,demoResult=False,saveImg=True,upperBound=400):
         self.stock_symbol=ticker
@@ -43,7 +44,7 @@ class StockSimulation:
                 print(f"文件夹 '{folder}' 不存在，已创建。")
             else:
                 print(f"文件夹 '{folder}' 已存在。")
-    def load_data(self):
+    def load_data(self,limited_num=None):
         """
         下载股票数据
         get data from file of yfinance; set train_data to data
@@ -57,6 +58,8 @@ class StockSimulation:
             data_reset=self.data.reset_index()
             data_reset.to_csv(self.stock_symbol+'.csv')
         print(f'get data: {self.data.head()}')
+        if limited_num is not None:
+            self.data=self.data.head(limited_num)
         self.train_data=self.data
         return self.data
     def delete_folder_contents(self,folder_path):
